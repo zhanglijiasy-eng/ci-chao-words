@@ -939,8 +939,54 @@ input {
 }
 
 #reviewView,
-#codexView {
+#codexView,
+#examView {
   padding: 20px;
+}
+
+.exam-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+  line-height: 1.7;
+}
+
+.exam-result {
+  border: 1px solid rgba(242, 193, 78, 0.42);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: rgba(242, 193, 78, 0.1);
+}
+
+.exam-result > strong {
+  display: block;
+  color: var(--gold);
+  font-size: 42px;
+  margin-bottom: 8px;
+}
+
+.exam-result p {
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.exam-unit-list {
+  display: grid;
+  gap: 8px;
+}
+
+.exam-unit-list div {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(6, 16, 20, 0.35);
 }
 
 .search-box {

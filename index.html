@@ -36,6 +36,9 @@
           <button class="nav-item" data-view="review" title="错题调律">
             <span>错题</span>
           </button>
+          <button class="nav-item" data-view="exam" title="随机考试">
+            <span>考试</span>
+          </button>
           <button class="nav-item" data-view="codex" title="词汇图鉴">
             <span>图鉴</span>
           </button>
@@ -146,6 +149,19 @@
             <button id="startMistakes">进入复习关卡</button>
           </div>
           <div class="word-grid" id="mistakeGrid"></div>
+        </section>
+
+        <section class="view" id="examView">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">随机考试</p>
+              <h3>20 词综合测试</h3>
+            </div>
+            <button id="startExam">开始考试</button>
+          </div>
+          <div class="exam-panel" id="examPanel">
+            <p>系统会从 Unit 1-6 随机抽取 20 个单词/短语。考试结束后，会根据每个单元正确率给出重点复习建议。</p>
+          </div>
         </section>
 
         <section class="view" id="codexView">

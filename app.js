@@ -60,6 +60,8 @@ const state = {
   currentMode: "meaning",
   answered: false,
   awaitingRetry: false,
+  examMode: false,
+  examSession: null,
   filterUnit: "all",
   activeRoleId: null,
   progress: defaultProgress(),
@@ -238,8 +240,9 @@ function switchView(name) {
   $$(".view").forEach((view) => view.classList.remove("active"));
   $(`#${name}View`).classList.add("active");
   $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
-  $("#screenTitle").textContent = { map: "回响地图", battle: "共振训练", review: "失谐回收战", codex: "词汇图鉴" }[name];
+  $("#screenTitle").textContent = { map: "回响地图", battle: "共振训练", review: "失谐回收战", exam: "随机考试", codex: "词汇图鉴" }[name];
   if (name === "review") renderMistakes();
+  if (name === "exam") renderExamIntro();
   if (name === "codex") renderCodex();
 }
 
@@ -363,12 +366,37 @@ function makeDailyQueue() {
 }
 
 function startBattle(items, label = "今日训练") {
+  state.examMode = false;
+  state.examSession = null;
   state.lastBattleItems = [...items];
   state.queue = [...items].sort(() => Math.random() - 0.5);
   state.selectedLesson = label;
   switchView("battle");
   $("#lessonLabel").textContent = label;
   $("#startDaily").textContent = "重新开始";
+  nextQuestion();
+}
+
+function balancedExamWords() {
+  const units = Object.values(groupedByUnit());
+  const picked = units.flatMap((items) => sample(items, Math.min(3, items.length)));
+  const remaining = vocabulary.filter((item) => !picked.some((word) => word.id === item.id));
+  return [...picked, ...sample(remaining, 20 - picked.length)].slice(0, 20).sort(() => Math.random() - 0.5);
+}
+
+function startExam() {
+  const items = balancedExamWords();
+  state.examMode = true;
+  state.examSession = {
+    total: items.length,
+    answers: [],
+  };
+  state.lastBattleItems = [];
+  state.queue = [...items];
+  state.selectedLesson = "20 词综合测试";
+  switchView("battle");
+  $("#lessonLabel").textContent = "随机考试";
+  $("#startDaily").textContent = "开始今日训练";
   nextQuestion();
 }
 
@@ -380,11 +408,16 @@ function nextQuestion() {
   $("#feedback").className = "feedback";
   $("#mistakeActions").classList.remove("show");
   $("#completionActions").classList.remove("show");
+  $("#returnMap").textContent = "返回地图";
+  $("#setOutAgain").textContent = "再出发";
   $("#inlineAnswer").innerHTML = "";
   const next = state.queue.shift();
   if (!next) {
+    if (state.examMode) {
+      renderExamResult();
+      return;
+    }
     $("#questionText").textContent = "本轮调律完成";
-    $("#phoneticText").textContent = "返回地图，选择下一个节点继续出发。";
     $("#answerGrid").innerHTML = "";
     $("#inlineAnswer").classList.remove("show");
     $("#completionActions").classList.add("show");
@@ -450,6 +483,14 @@ function focusFirstBlank() {
 
 function answer(correct) {
   if (state.answered || !state.current) return;
+  if (state.examMode) {
+    state.examSession.answers.push({ id: state.current.id, unit: state.current.unit, correct });
+    state.answered = true;
+    $("#feedback").textContent = correct ? "答对了，进入下一题。" : `本题答案：${state.current.word}`;
+    $("#feedback").className = correct ? "feedback good" : "feedback bad";
+    window.setTimeout(nextQuestion, correct ? 520 : 1100);
+    return;
+  }
   if (correct) {
     state.answered = true;
     state.progress.mastered[state.current.id] = (state.progress.mastered[state.current.id] || 0) + 1;
@@ -476,6 +517,56 @@ function answer(correct) {
     saveProgress();
     renderStats();
   }
+}
+
+function renderExamIntro() {
+  $("#examPanel").innerHTML = `<p>系统会从 Unit 1-6 随机抽取 20 个单词/短语。考试结束后，会根据每个单元正确率给出重点复习建议。</p>`;
+}
+
+function renderExamResult() {
+  const answers = state.examSession?.answers || [];
+  const correct = answers.filter((item) => item.correct).length;
+  const byUnit = answers.reduce((acc, item) => {
+    (acc[item.unit] ||= { total: 0, correct: 0 });
+    acc[item.unit].total += 1;
+    if (item.correct) acc[item.unit].correct += 1;
+    return acc;
+  }, {});
+  const unitRows = Object.entries(byUnit).sort(([a], [b]) => unitOrder(a, b)).map(([unit, stat]) => {
+    const rate = Math.round(stat.correct / stat.total * 100);
+    return { unit, ...stat, rate };
+  });
+  const weak = unitRows.filter((row) => row.rate < 80).sort((a, b) => a.rate - b.rate);
+  const advice = weak.length
+    ? `建议重点复习：${weak.map((row) => `${row.unit}（${row.rate}%）`).join("、")}。`
+    : "本次各单元都不错，可以继续挑战下一轮综合测试。";
+
+  state.examMode = false;
+  $("#questionText").textContent = "考试完成";
+  $("#phoneticText").textContent = `得分 ${correct}/${answers.length}`;
+  $("#answerGrid").innerHTML = `
+    <div class="exam-result">
+      <strong>${correct}/${answers.length}</strong>
+      <p>${advice}</p>
+      <div class="exam-unit-list">
+        ${unitRows.map((row) => `
+          <div>
+            <span>${row.unit}</span>
+            <b>${row.correct}/${row.total}</b>
+            <small>${row.rate}%</small>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+  $("#inlineAnswer").classList.remove("show");
+  $("#inlineAnswer").innerHTML = "";
+  $("#mistakeActions").classList.remove("show");
+  $("#completionActions").classList.add("show");
+  $("#enemyCore").textContent = "分";
+  $("#returnMap").textContent = "返回首页";
+  $("#setOutAgain").textContent = "再考一次";
+  state.lastBattleItems = [];
 }
 
 function retryQuestion() {
@@ -573,12 +664,14 @@ function bindEvents() {
   $$(".nav-item").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
   $("#exitRole").addEventListener("click", () => exitToLogin("已存档退出。"));
   $("#startDaily").addEventListener("click", () => startBattle(makeDailyQueue(), "今日训练"));
+  $("#startExam").addEventListener("click", startExam);
   $("#nextQuestion").addEventListener("click", nextQuestion);
   $("#retryQuestion").addEventListener("click", retryQuestion);
   $("#addMistake").addEventListener("click", addCurrentMistake);
   $("#returnMap").addEventListener("click", () => switchView("map"));
   $("#setOutAgain").addEventListener("click", () => {
-    if (state.lastBattleItems.length) startBattle(state.lastBattleItems, state.selectedLesson || "再出发");
+    if (!state.lastBattleItems.length && state.selectedLesson === "20 词综合测试") startExam();
+    else if (state.lastBattleItems.length) startBattle(state.lastBattleItems, state.selectedLesson || "再出发");
   });
   $("#inlineAnswer").addEventListener("submit", (event) => {
     event.preventDefault();
