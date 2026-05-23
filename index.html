@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>词潮回响</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <section class="login-screen" id="loginScreen">
+      <div class="login-hero">
+        <p class="eyebrow">选择共鸣者</p>
+        <h1>词潮回响</h1>
+        <p>每个角色都有独立进度。选择角色后进入 45 分钟复习时间，到时自动存档退出。</p>
+      </div>
+      <div class="role-grid" id="roleGrid"></div>
+    </section>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">C</div>
+          <div>
+            <h1>词潮回响</h1>
+            <p>Unit 1-6 期末复习</p>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="主导航">
+          <button class="nav-item active" data-view="map" title="冒险地图">
+            <span>地图</span>
+          </button>
+          <button class="nav-item" data-view="battle" title="今日训练">
+            <span>训练</span>
+          </button>
+          <button class="nav-item" data-view="review" title="错题调律">
+            <span>错题</span>
+          </button>
+          <button class="nav-item" data-view="codex" title="词汇图鉴">
+            <span>图鉴</span>
+          </button>
+        </nav>
+
+        <section class="profile-panel">
+          <div class="avatar-orbit">
+            <div class="avatar-core"></div>
+          </div>
+          <div>
+            <p class="eyebrow">调律等级</p>
+            <strong id="activeRoleName">未选择</strong>
+            <small id="levelLabel">Lv. 1</small>
+          </div>
+          <div class="xp-track">
+            <span id="xpBar"></span>
+          </div>
+        </section>
+
+        <button class="exit-button" id="exitRole">存档退出</button>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">今日任务</p>
+            <h2 id="screenTitle">回响地图</h2>
+          </div>
+          <div class="stats-strip">
+            <div><span id="totalMastered">0</span><small>已点亮</small></div>
+            <div><span id="totalStars">0</span><small>星辉</small></div>
+            <div><span id="streakCount">0</span><small>连击</small></div>
+          </div>
+          <div class="timer-card" id="timerCard">
+            <span id="timerText">45:00</span>
+            <small>番茄时钟</small>
+          </div>
+        </header>
+
+        <section class="view active" id="mapView">
+          <div class="home-progress">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow">角色进度</p>
+                <h3>共鸣者档案</h3>
+              </div>
+            </div>
+            <div class="mini-role-grid" id="homeRoleProgress"></div>
+          </div>
+          <div class="map-stage">
+            <div class="map-sky"></div>
+            <div class="zone-list" id="zoneList"></div>
+          </div>
+          <aside class="mission-panel">
+            <p class="eyebrow">当前章节</p>
+            <h3 id="selectedZoneName">请选择一个区域</h3>
+            <p id="selectedZoneMeta">每个 Unit 会自动拆成几个小关卡，每关 6-8 个词。</p>
+            <div class="lesson-list" id="lessonList"></div>
+          </aside>
+        </section>
+
+        <section class="view" id="battleView">
+          <div class="battle-board">
+            <div class="enemy-field">
+              <div class="pulse-rings">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="enemy-core" id="enemyCore">?</div>
+              <p id="battleMode">选择正确含义，完成共振打击</p>
+            </div>
+
+            <div class="question-card">
+              <div class="battle-head">
+                <div>
+                  <p class="eyebrow" id="lessonLabel">今日训练</p>
+                  <h3 id="questionText">点击开始训练</h3>
+                </div>
+                <button class="icon-button" id="speakBtn" title="朗读">音</button>
+              </div>
+              <p class="phonetic" id="phoneticText"></p>
+              <div class="answer-grid" id="answerGrid"></div>
+              <form class="inline-answer" id="inlineAnswer"></form>
+              <div class="feedback" id="feedback"></div>
+              <div class="mistake-actions" id="mistakeActions">
+                <button id="retryQuestion">重新回答</button>
+                <button id="addMistake">加入错题集</button>
+              </div>
+              <div class="completion-actions" id="completionActions">
+                <button id="returnMap">返回地图</button>
+                <button id="setOutAgain">再出发</button>
+              </div>
+              <div class="battle-actions">
+                <button id="startDaily">开始今日训练</button>
+                <button id="nextQuestion" disabled>下一击</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="reviewView">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">失谐词库</p>
+              <h3>失谐回收战</h3>
+            </div>
+            <button id="startMistakes">进入复习关卡</button>
+          </div>
+          <div class="word-grid" id="mistakeGrid"></div>
+        </section>
+
+        <section class="view" id="codexView">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">回响图鉴</p>
+              <h3>全部复习范围</h3>
+            </div>
+            <label class="search-box">
+              <span>查</span>
+              <input id="searchInput" placeholder="搜索英文或中文" />
+            </label>
+          </div>
+          <div class="filters" id="unitFilters"></div>
+          <div class="word-grid" id="wordGrid"></div>
+        </section>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
