@@ -27,20 +27,20 @@
         </div>
 
         <nav class="nav" aria-label="主导航">
-          <button class="nav-item active" data-view="map" title="冒险地图">
-            <span>地图</span>
+          <button class="nav-item active" data-view="map" title="大地图">
+            <span>大地图</span>
           </button>
-          <button class="nav-item" data-view="battle" title="今日训练">
-            <span>训练</span>
+          <button class="nav-item" data-view="battle" title="每日委托">
+            <span>委托</span>
           </button>
-          <button class="nav-item" data-view="review" title="错题调律">
-            <span>错题</span>
+          <button class="nav-item" data-view="review" title="逆境深塔">
+            <span>深塔</span>
           </button>
-          <button class="nav-item" data-view="exam" title="随机考试">
-            <span>考试</span>
+          <button class="nav-item" data-view="exam" title="全息战略">
+            <span>战略</span>
           </button>
-          <button class="nav-item" data-view="codex" title="词汇图鉴">
-            <span>图鉴</span>
+          <button class="nav-item" data-view="codex" title="数据坞">
+            <span>数据坞</span>
           </button>
         </nav>
 
@@ -64,8 +64,8 @@
       <main>
         <header class="topbar">
           <div>
-            <p class="eyebrow">今日任务</p>
-            <h2 id="screenTitle">回响地图</h2>
+            <p class="eyebrow">索拉指南</p>
+            <h2 id="screenTitle">大地图</h2>
           </div>
           <div class="stats-strip">
             <div><span id="totalMastered">0</span><small>已点亮</small></div>
@@ -115,8 +115,8 @@
             <div class="question-card">
               <div class="battle-head">
                 <div>
-                  <p class="eyebrow" id="lessonLabel">今日训练</p>
-                  <h3 id="questionText">点击开始训练</h3>
+                  <p class="eyebrow" id="lessonLabel">每日委托</p>
+                  <h3 id="questionText">点击开始委托</h3>
                 </div>
                 <button class="icon-button" id="speakBtn" title="朗读">音</button>
               </div>
@@ -126,14 +126,14 @@
               <div class="feedback" id="feedback"></div>
               <div class="mistake-actions" id="mistakeActions">
                 <button id="retryQuestion">重新回答</button>
-                <button id="addMistake">加入错题集</button>
+                <button id="addMistake">收入失谐档案</button>
               </div>
               <div class="completion-actions" id="completionActions">
-                <button id="returnMap">返回地图</button>
+                <button id="returnMap">返回大地图</button>
                 <button id="setOutAgain">再出发</button>
               </div>
               <div class="battle-actions">
-                <button id="startDaily">开始今日训练</button>
+                <button id="startDaily">开始每日委托</button>
                 <button id="nextQuestion" disabled>下一击</button>
               </div>
             </div>
@@ -143,10 +143,10 @@
         <section class="view" id="reviewView">
           <div class="section-head">
             <div>
-              <p class="eyebrow">失谐词库</p>
-              <h3>失谐回收战</h3>
+              <p class="eyebrow">逆境深塔</p>
+              <h3>失谐档案挑战</h3>
             </div>
-            <button id="startMistakes">进入复习关卡</button>
+            <button id="startMistakes">进入深塔挑战</button>
           </div>
           <div class="word-grid" id="mistakeGrid"></div>
         </section>
@@ -154,21 +154,21 @@
         <section class="view" id="examView">
           <div class="section-head">
             <div>
-              <p class="eyebrow">随机考试</p>
-              <h3>20 词综合测试</h3>
+              <p class="eyebrow">全息战略</p>
+              <h3>20 词战术测试</h3>
             </div>
-            <button id="startExam">开始考试</button>
+            <button id="startExam">启动战略测试</button>
           </div>
           <div class="exam-panel" id="examPanel">
-            <p>系统会从 Unit 1-6 随机抽取 20 个单词/短语。考试结束后，会根据每个单元正确率给出重点复习建议。</p>
+            <p>系统会从 Unit 1-6 随机抽取 20 个单词/短语。全息战略结束后，会根据每个单元正确率给出重点复习建议。</p>
           </div>
         </section>
 
         <section class="view" id="codexView">
           <div class="section-head">
             <div>
-              <p class="eyebrow">回响图鉴</p>
-              <h3>全部复习范围</h3>
+              <p class="eyebrow">数据坞</p>
+              <h3>词汇档案</h3>
             </div>
             <label class="search-box">
               <span>查</span>

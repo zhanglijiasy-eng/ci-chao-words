@@ -240,7 +240,7 @@ function switchView(name) {
   $$(".view").forEach((view) => view.classList.remove("active"));
   $(`#${name}View`).classList.add("active");
   $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
-  $("#screenTitle").textContent = { map: "回响地图", battle: "共振训练", review: "失谐回收战", exam: "随机考试", codex: "词汇图鉴" }[name];
+  $("#screenTitle").textContent = { map: "大地图", battle: "每日委托", review: "逆境深塔", exam: "全息战略", codex: "数据坞" }[name];
   if (name === "review") renderMistakes();
   if (name === "exam") renderExamIntro();
   if (name === "codex") renderCodex();
@@ -365,7 +365,7 @@ function makeDailyQueue() {
   return [...mistakes.slice(0, 6), ...fresh.slice(0, 14)].slice(0, 20);
 }
 
-function startBattle(items, label = "今日训练") {
+function startBattle(items, label = "每日委托") {
   state.examMode = false;
   state.examSession = null;
   state.lastBattleItems = [...items];
@@ -393,10 +393,10 @@ function startExam() {
   };
   state.lastBattleItems = [];
   state.queue = [...items];
-  state.selectedLesson = "20 词综合测试";
+  state.selectedLesson = "20 词战术测试";
   switchView("battle");
-  $("#lessonLabel").textContent = "随机考试";
-  $("#startDaily").textContent = "开始今日训练";
+  $("#lessonLabel").textContent = "全息战略";
+  $("#startDaily").textContent = "开始每日委托";
   nextQuestion();
 }
 
@@ -408,7 +408,7 @@ function nextQuestion() {
   $("#feedback").className = "feedback";
   $("#mistakeActions").classList.remove("show");
   $("#completionActions").classList.remove("show");
-  $("#returnMap").textContent = "返回地图";
+  $("#returnMap").textContent = "返回大地图";
   $("#setOutAgain").textContent = "再出发";
   $("#inlineAnswer").innerHTML = "";
   const next = state.queue.shift();
@@ -507,7 +507,7 @@ function answer(correct) {
   } else {
     state.progress.streak = 0;
     state.awaitingRetry = true;
-    $("#feedback").textContent = "回答不对，再试一次；也可以先加入错题集，之后去失谐回收战专门复习。";
+    $("#feedback").textContent = "回答不对，再试一次；也可以先收入失谐档案，之后去逆境深塔专门复习。";
     $("#feedback").className = "feedback bad";
     $("#mistakeActions").classList.add("show");
     $$(".letter-input").forEach((input) => {
@@ -520,7 +520,7 @@ function answer(correct) {
 }
 
 function renderExamIntro() {
-  $("#examPanel").innerHTML = `<p>系统会从 Unit 1-6 随机抽取 20 个单词/短语。考试结束后，会根据每个单元正确率给出重点复习建议。</p>`;
+  $("#examPanel").innerHTML = `<p>系统会从 Unit 1-6 随机抽取 20 个单词/短语。全息战略结束后，会根据每个单元正确率给出重点复习建议。</p>`;
 }
 
 function renderExamResult() {
@@ -542,7 +542,7 @@ function renderExamResult() {
     : "本次各单元都不错，可以继续挑战下一轮综合测试。";
 
   state.examMode = false;
-  $("#questionText").textContent = "考试完成";
+  $("#questionText").textContent = "战略测试完成";
   $("#phoneticText").textContent = `得分 ${correct}/${answers.length}`;
   $("#answerGrid").innerHTML = `
     <div class="exam-result">
@@ -590,7 +590,7 @@ function addCurrentMistake() {
   saveProgress();
   renderStats();
   renderMistakes();
-  $("#feedback").textContent = `已加入错题集：${state.current.word} = ${state.current.meaning}`;
+  $("#feedback").textContent = `已收入失谐档案：${state.current.word} = ${state.current.meaning}`;
   $("#feedback").className = "feedback bad";
   $("#mistakeActions").classList.remove("show");
   state.answered = true;
@@ -601,7 +601,7 @@ function renderMistakes() {
   const items = Object.keys(state.progress.mistakes || {})
     .map((id) => vocabulary.find((item) => item.id === id))
     .filter(Boolean);
-  $("#mistakeGrid").innerHTML = items.length ? items.map(wordCard).join("") : `<div class="empty-state">目前没有失谐词。答错后可以手动加入错题集。</div>`;
+  $("#mistakeGrid").innerHTML = items.length ? items.map(wordCard).join("") : `<div class="empty-state">目前没有失谐档案。答错后可以手动收入档案。</div>`;
 }
 
 function renderCodex() {
@@ -663,14 +663,14 @@ function bindEvents() {
   });
   $$(".nav-item").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
   $("#exitRole").addEventListener("click", () => exitToLogin("已存档退出。"));
-  $("#startDaily").addEventListener("click", () => startBattle(makeDailyQueue(), "今日训练"));
+  $("#startDaily").addEventListener("click", () => startBattle(makeDailyQueue(), "每日委托"));
   $("#startExam").addEventListener("click", startExam);
   $("#nextQuestion").addEventListener("click", nextQuestion);
   $("#retryQuestion").addEventListener("click", retryQuestion);
   $("#addMistake").addEventListener("click", addCurrentMistake);
   $("#returnMap").addEventListener("click", () => switchView("map"));
   $("#setOutAgain").addEventListener("click", () => {
-    if (!state.lastBattleItems.length && state.selectedLesson === "20 词综合测试") startExam();
+    if (!state.lastBattleItems.length && state.selectedLesson === "20 词战术测试") startExam();
     else if (state.lastBattleItems.length) startBattle(state.lastBattleItems, state.selectedLesson || "再出发");
   });
   $("#inlineAnswer").addEventListener("submit", (event) => {
@@ -704,8 +704,8 @@ function bindEvents() {
       .map((id) => vocabulary.find((item) => item.id === id))
       .filter(Boolean)
       .sort((a, b) => unitOrder(a.unit, b.unit) || (a.page || 0) - (b.page || 0));
-    if (mistakes.length) startBattle(mistakes, "失谐回收战");
-    else showToast("错题集现在是空的。");
+    if (mistakes.length) startBattle(mistakes, "逆境深塔");
+    else showToast("失谐档案现在是空的。");
   });
   $("#searchInput").addEventListener("input", renderCodex);
   $("#speakBtn").addEventListener("click", speakCurrent);
