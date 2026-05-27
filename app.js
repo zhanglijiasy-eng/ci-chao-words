@@ -387,19 +387,32 @@ function renderMemoryLessons() {
   });
 }
 
+function memoryLevelItems(level) {
+  return level.type === "word-family"
+    ? level.items.map((item, index) => ({
+      id: `unit5-${level.id}-${index}`,
+      unit: unit5Challenge.unit,
+      word: item.forms.map((form) => form.answer).join(" | "),
+      meaning: item.forms.map((form) => form.clue).join(" / "),
+      familyRoot: item.root,
+      forms: item.forms,
+      challengeType: level.type,
+    }))
+    : level.items.map((item, index) => ({
+      id: `unit5-${level.id}-${index}`,
+      unit: unit5Challenge.unit,
+      word: item.answer,
+      meaning: item.clue,
+      sentence: item.sentence || "",
+      challengeType: level.type,
+    }));
+}
+
 function startMemoryLevel(levelId) {
   const level = unit5Challenge.levels.find((item) => item.id === levelId);
   if (!level) return;
   state.specialMode = level.type;
-  const items = level.items.map((item, index) => ({
-    id: `unit5-${level.id}-${index}`,
-    unit: unit5Challenge.unit,
-    word: item.answer,
-    meaning: item.clue,
-    sentence: item.sentence || "",
-    challengeType: level.type,
-  }));
-  startBattle(items, `${unit5Challenge.title} · ${level.title}`);
+  startBattle(memoryLevelItems(level), `${unit5Challenge.title} · ${level.title}`);
 }
 
 function knowledgeForUnit(unit) {
@@ -488,8 +501,72 @@ function balancedExamWords() {
   return [...picked, ...sample(remaining, 20 - picked.length)].slice(0, 20).sort(() => Math.random() - 0.5);
 }
 
+function examSources() {
+  const sources = [];
+  Object.entries(groupedByUnit()).sort(([a], [b]) => unitOrder(a, b)).forEach(([unit, items]) => {
+    const lessons = lessonsFor(items);
+    lessons.forEach((lesson, index) => {
+      sources.push({
+        id: `vocab:${unit}:${index}`,
+        group: `${unit} 词汇关卡`,
+        label: `${lessonName(unit, index, lessons.length)} (${lesson.length}题)`,
+        items: lesson,
+      });
+    });
+  });
+  unit5Challenge.levels.forEach((level) => {
+    const items = memoryLevelItems(level);
+    sources.push({
+      id: `memory:${level.id}`,
+      group: "Unit 5 背记闯关",
+      label: `${level.title} (${items.length}题)`,
+      items,
+    });
+  });
+  return sources;
+}
+
+function renderExamIntro() {
+  const sources = examSources();
+  const grouped = sources.reduce((acc, source) => {
+    (acc[source.group] ||= []).push(source);
+    return acc;
+  }, {});
+  $("#examPanel").innerHTML = `
+    <div class="exam-range-head">
+      <p>请选择考试范围。每一个词汇小关卡、背记闯关都可以单独勾选。</p>
+      <div>
+        <button id="selectAllExam" type="button">全选</button>
+        <button id="clearExam" type="button">清空</button>
+      </div>
+    </div>
+    <div class="exam-range-list">
+      ${Object.entries(grouped).map(([group, groupSources]) => `
+        <section class="exam-range-group">
+          <h4>${group}</h4>
+          ${groupSources.map((source) => `
+            <label class="exam-range-item">
+              <input type="checkbox" value="${source.id}" checked />
+              <span>${source.label}</span>
+            </label>
+          `).join("")}
+        </section>
+      `).join("")}
+    </div>
+  `;
+  $("#selectAllExam").addEventListener("click", () => $$("#examPanel input[type='checkbox']").forEach((input) => { input.checked = true; }));
+  $("#clearExam").addEventListener("click", () => $$("#examPanel input[type='checkbox']").forEach((input) => { input.checked = false; }));
+}
+
 function startExam() {
-  const items = balancedExamWords();
+  const sourceMap = new Map(examSources().map((source) => [source.id, source]));
+  const selectedIds = $$("#examPanel input[type='checkbox']:checked").map((input) => input.value);
+  const pool = selectedIds.flatMap((id) => sourceMap.get(id)?.items || []);
+  if (!pool.length) {
+    showToast("请先选择至少一个考试范围。");
+    return;
+  }
+  const items = pool.length > 20 ? sample(pool, 20) : [...pool].sort(() => Math.random() - 0.5);
   state.examMode = true;
   state.specialMode = null;
   state.examSession = {
@@ -538,37 +615,49 @@ function nextQuestion() {
   state.current = next;
   state.currentMode = "spelling";
   $("#phoneticText").textContent = `${next.phonetic || ""} ${next.partOfSpeech || ""}`.trim();
-  $("#battleMode").textContent = state.specialMode
+  const challengeType = currentChallengeType();
+  $("#battleMode").textContent = challengeType
     ? "根据题目填写完整英文，不给首字母"
     : "听音频，看中文和首字母提示，填写剩余字母";
   $("#speakBtn").disabled = !("speechSynthesis" in window);
 
-  if (state.specialMode === "sentence") {
+  if (challengeType === "word-family") {
+    $("#answerGrid").innerHTML = "";
+    renderFamilyAnswer(next);
+  } else if (challengeType === "sentence") {
     $("#answerGrid").innerHTML = `<div class="sentence-card">${renderSentenceWithBlank(next.sentence)}</div>`;
     renderInlineAnswer(next.word, { showFirst: false, label: "填写划线处" });
   } else {
     $("#answerGrid").innerHTML = "";
     renderInlineAnswer(next.word, {
-      showFirst: !state.specialMode,
-      label: state.specialMode ? "填写英文" : "首字母提示",
+      showFirst: !challengeType,
+      label: challengeType ? "填写英文" : "首字母提示",
     });
   }
   $("#questionText").textContent = next.meaning;
   updateFocusPanel();
-  if (!state.specialMode) window.setTimeout(speakCurrent, 260);
+  if (!challengeType) window.setTimeout(speakCurrent, 260);
+}
+
+function currentChallengeType() {
+  return state.current?.challengeType || state.specialMode || null;
 }
 
 function currentFocusTitle() {
-  if (state.specialMode === "sentence") return "句型填空";
-  if (state.specialMode === "full") return state.selectedLesson.includes("短语") ? "短语默写" : "词形变换";
+  const challengeType = currentChallengeType();
+  if (challengeType === "word-family") return "词形家族";
+  if (challengeType === "sentence") return "句型填空";
+  if (challengeType === "full") return state.selectedLesson.includes("短语") ? "短语默写" : "词形变换";
   if (state.examMode) return "随机考试";
   return "单词拼写";
 }
 
 function currentFocusTip() {
-  if (state.specialMode === "sentence") return "先看中文，再读英文句子，判断划线处缺少哪个单词或短语。";
-  if (state.specialMode === "full" && state.selectedLesson.includes("词性")) return "把同一组词形放在一起记：先想词根，再想词性变化。";
-  if (state.specialMode === "full" && state.selectedLesson.includes("短语")) return "先想核心动词，再补介词和固定搭配。";
+  const challengeType = currentChallengeType();
+  if (challengeType === "word-family") return "同一组词形一起记：先看词根，再对照名词、动词、形容词或副词变化。";
+  if (challengeType === "sentence") return "先看中文，再读英文句子，判断划线处缺少哪个单词或短语。";
+  if (challengeType === "full" && state.selectedLesson.includes("短语")) return "先想核心动词，再补介词和固定搭配。";
+  if (challengeType === "full") return "根据中文和词性直接默写完整英文。";
   if (state.examMode) return "按考试节奏作答，结束后会按单元给出复习建议。";
   return "听音频，看中文和首字母提示，补齐剩余字母。";
 }
@@ -600,6 +689,23 @@ function renderSentenceWithBlank(sentence) {
   return String(sentence || "").replace("____", '<span class="sentence-blank">________</span>');
 }
 
+function renderFamilyAnswer(item) {
+  const form = $("#inlineAnswer");
+  const rows = (item.forms || []).map((entry, index) => `
+    <label class="family-row">
+      <span>${entry.clue}</span>
+      <input class="family-input" data-answer="${entry.answer}" data-index="${index}" autocomplete="off" spellcheck="false" />
+    </label>
+  `).join("");
+  form.innerHTML = `
+    <span class="inline-label">词根：${item.familyRoot}</span>
+    <div class="family-lines">${rows}</div>
+    <button class="inline-submit" id="submitTyping" type="submit">确认</button>
+  `;
+  form.classList.add("show");
+  form.querySelector(".family-input")?.focus();
+}
+
 function renderInlineAnswer(word, options = {}) {
   const showFirst = options.showFirst !== false;
   const label = options.label || "首字母提示";
@@ -626,11 +732,20 @@ function inlineAnswerText() {
 }
 
 function isCorrectSpelling(word) {
-  const expected = state.specialMode ? word : remainingLetters(word);
+  const challengeType = currentChallengeType();
+  if (challengeType === "word-family") {
+    return $$(".family-input").every((input) => compact(input.value) === compact(input.dataset.answer));
+  }
+  const expected = challengeType ? word : remainingLetters(word);
   return compact(inlineAnswerText()) === compact(expected);
 }
 
 function focusFirstBlank() {
+  const firstFamilyEmpty = $$(".family-input").find((input) => !input.value);
+  if (firstFamilyEmpty) {
+    firstFamilyEmpty.focus();
+    return;
+  }
   const firstEmpty = $$(".letter-input").find((input) => !input.value);
   (firstEmpty || $(".letter-input"))?.focus();
 }
@@ -670,15 +785,14 @@ function answer(correct) {
     $$(".letter-input").forEach((input) => {
       if (input.value && input.value !== input.dataset.answer) input.classList.add("wrong");
     });
+    $$(".family-input").forEach((input) => {
+      input.classList.toggle("wrong", compact(input.value) !== compact(input.dataset.answer));
+    });
     focusFirstBlank();
     updateFocusPanel();
     saveProgress();
     renderStats();
   }
-}
-
-function renderExamIntro() {
-  $("#examPanel").innerHTML = `<p>系统会从 Unit 1-6 随机抽取 20 个单词/短语。考试结束后，会根据每个单元正确率给出重点复习建议。</p>`;
 }
 
 function renderExamResult() {
@@ -732,6 +846,10 @@ function retryQuestion() {
   state.answered = false;
   state.awaitingRetry = false;
   $$(".letter-input").forEach((input) => {
+    input.value = "";
+    input.classList.remove("wrong");
+  });
+  $$(".family-input").forEach((input) => {
     input.value = "";
     input.classList.remove("wrong");
   });
@@ -838,6 +956,11 @@ function bindEvents() {
     answer(isCorrectSpelling(state.current?.word || ""));
   });
   $("#inlineAnswer").addEventListener("input", (event) => {
+    const familyInput = event.target.closest(".family-input");
+    if (familyInput) {
+      familyInput.classList.remove("wrong");
+      return;
+    }
     const input = event.target.closest(".letter-input");
     if (!input) return;
     input.value = input.value.replace(/[^a-zA-Z]/g, "").slice(-1).toLowerCase();
@@ -848,6 +971,14 @@ function bindEvents() {
     }
   });
   $("#inlineAnswer").addEventListener("keydown", (event) => {
+    const familyInput = event.target.closest(".family-input");
+    if (familyInput && event.key === "Enter") {
+      event.preventDefault();
+      const next = $(`.family-input[data-index="${Number(familyInput.dataset.index) + 1}"]`);
+      if (next) next.focus();
+      else answer(isCorrectSpelling(state.current?.word || ""));
+      return;
+    }
     const input = event.target.closest(".letter-input");
     if (!input) return;
     if (event.key === "Backspace" && !input.value) {

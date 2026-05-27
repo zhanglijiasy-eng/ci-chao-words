@@ -896,6 +896,46 @@ input {
   margin-bottom: 8px;
 }
 
+.family-lines {
+  width: 100%;
+  display: grid;
+  gap: 12px;
+}
+
+.family-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.75fr) minmax(180px, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.family-row span {
+  color: #d7ece8;
+}
+
+.family-input {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-bottom: 3px solid rgba(241, 251, 248, 0.55);
+  border-radius: 0;
+  padding: 0 4px;
+  color: var(--text);
+  background: transparent;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.family-input:focus {
+  outline: 0;
+  border-bottom-color: var(--mint);
+  box-shadow: 0 8px 16px rgba(80, 240, 200, 0.12);
+}
+
+.family-input.wrong {
+  border-bottom-color: var(--coral);
+}
+
 .feedback {
   min-height: 46px;
   margin: 16px 0;
@@ -1060,6 +1100,52 @@ input {
   color: var(--muted);
   background: rgba(255, 255, 255, 0.04);
   line-height: 1.7;
+}
+
+.exam-range-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.exam-range-head button {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.exam-range-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.exam-range-group {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.exam-range-group h4 {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.exam-range-item {
+  min-height: 36px;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  color: #d7ece8;
+}
+
+.exam-range-item input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--mint);
 }
 
 .exam-result {
