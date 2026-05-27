@@ -1,4 +1,5 @@
 import { vocabulary } from "./vocabulary.js";
+import { knowledgeUnits } from "./knowledge.js";
 
 const STORAGE_KEY = "ci-chao-progress-v3";
 const LEGACY_STORAGE_KEY = "ci-chao-progress-v2";
@@ -54,6 +55,7 @@ const $$ = (selector) => [...document.querySelectorAll(selector)];
 const state = {
   selectedUnit: "Unit 1",
   selectedLesson: null,
+  selectedKnowledge: null,
   lastBattleItems: [],
   queue: [],
   current: null,
@@ -81,7 +83,7 @@ function unitOrder(a, b) {
 }
 
 function defaultProgress() {
-  return { mastered: {}, mistakes: {}, stars: 0, streak: 0, xp: 0, minutesPlayed: 0, sessions: 0 };
+  return { mastered: {}, mistakes: {}, knowledgeDone: {}, stars: 0, streak: 0, xp: 0, minutesPlayed: 0, sessions: 0 };
 }
 
 function normalizeProgress(progress = {}) {
@@ -90,6 +92,7 @@ function normalizeProgress(progress = {}) {
     ...progress,
     mastered: progress.mastered || {},
     mistakes: progress.mistakes || {},
+    knowledgeDone: progress.knowledgeDone || {},
   };
 }
 
@@ -240,7 +243,7 @@ function switchView(name) {
   $$(".view").forEach((view) => view.classList.remove("active"));
   $(`#${name}View`).classList.add("active");
   $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
-  $("#screenTitle").textContent = { map: "回响地图", battle: "共振训练", review: "失谐回收战", exam: "随机考试", codex: "词汇图鉴" }[name];
+  $("#screenTitle").textContent = { map: "回响地图", battle: "共振训练", review: "失谐回收战", exam: "随机考试", knowledge: "知识关卡", codex: "词汇图鉴" }[name];
   if (name === "review") renderMistakes();
   if (name === "exam") renderExamIntro();
   if (name === "codex") renderCodex();
@@ -328,9 +331,11 @@ function renderMap() {
       state.selectedUnit = node.dataset.unit;
       renderMap();
       renderLessons();
+      renderKnowledgeLessons();
     });
   });
   renderLessons();
+  renderKnowledgeLessons();
 }
 
 function renderLessons() {
@@ -354,6 +359,60 @@ function renderLessons() {
     const index = Number(card.dataset.lesson);
     card.addEventListener("click", () => startBattle(lessons[index], `${state.selectedUnit} · ${lessonName(state.selectedUnit, index, lessons.length)}`));
   });
+}
+
+function knowledgeForUnit(unit) {
+  return knowledgeUnits.find((item) => item.unit === unit);
+}
+
+function knowledgeKey(unit, levelId) {
+  return `${unit}:${levelId}`;
+}
+
+function renderKnowledgeLessons() {
+  const unitData = knowledgeForUnit(state.selectedUnit);
+  const levels = unitData?.levels || [];
+  $("#knowledgeList").innerHTML = levels.length ? levels.map((level, index) => {
+    const done = state.progress.knowledgeDone[knowledgeKey(state.selectedUnit, level.id)];
+    return `
+      <button class="knowledge-card ${done ? "done" : ""}" data-level="${level.id}">
+        <span>知识 ${index + 1}</span>
+        <strong>${level.title}</strong>
+        <small>${done ? "已点亮" : "待完成"} · ${unitData.title}</small>
+      </button>
+    `;
+  }).join("") : `<div class="empty-state">这个单元还没有知识关卡。</div>`;
+  $$(".knowledge-card").forEach((card) => {
+    card.addEventListener("click", () => openKnowledgeLevel(card.dataset.level));
+  });
+}
+
+function openKnowledgeLevel(levelId) {
+  const unitData = knowledgeForUnit(state.selectedUnit);
+  const level = unitData?.levels.find((item) => item.id === levelId);
+  if (!unitData || !level) return;
+  state.selectedKnowledge = { unit: state.selectedUnit, levelId };
+  $("#knowledgeUnitLabel").textContent = `${state.selectedUnit} · ${unitData.title}`;
+  $("#knowledgeTitle").textContent = level.title;
+  $("#knowledgeContent").innerHTML = level.content.map((line) => {
+    const cls = /^[（(]?[一二三四五六七八九十]+[）)]|重点|考点|Unit/i.test(line) ? "knowledge-line heading" : "knowledge-line";
+    return `<p class="${cls}">${line}</p>`;
+  }).join("");
+  $("#completeKnowledge").textContent = state.progress.knowledgeDone[knowledgeKey(state.selectedUnit, levelId)] ? "已点亮" : "完成并点亮";
+  switchView("knowledge");
+}
+
+function completeKnowledgeLevel() {
+  if (!state.selectedKnowledge) return;
+  const key = knowledgeKey(state.selectedKnowledge.unit, state.selectedKnowledge.levelId);
+  state.progress.knowledgeDone[key] = true;
+  state.progress.stars = (state.progress.stars || 0) + 1;
+  state.progress.xp = (state.progress.xp || 0) + 8;
+  saveProgress();
+  renderStats();
+  renderKnowledgeLessons();
+  $("#completeKnowledge").textContent = "已点亮";
+  showToast("知识关卡已点亮。");
 }
 
 function makeDailyQueue() {
@@ -669,6 +728,8 @@ function bindEvents() {
   $("#retryQuestion").addEventListener("click", retryQuestion);
   $("#addMistake").addEventListener("click", addCurrentMistake);
   $("#returnMap").addEventListener("click", () => switchView("map"));
+  $("#backToMap").addEventListener("click", () => switchView("map"));
+  $("#completeKnowledge").addEventListener("click", completeKnowledgeLevel);
   $("#setOutAgain").addEventListener("click", () => {
     if (!state.lastBattleItems.length && state.selectedLesson === "20 词综合测试") startExam();
     else if (state.lastBattleItems.length) startBattle(state.lastBattleItems, state.selectedLesson || "再出发");

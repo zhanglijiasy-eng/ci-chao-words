@@ -96,7 +96,12 @@
             <p class="eyebrow">当前章节</p>
             <h3 id="selectedZoneName">请选择一个区域</h3>
             <p id="selectedZoneMeta">每个 Unit 会自动拆成几个小关卡，每关 6-8 个词。</p>
+            <div class="panel-divider"></div>
+            <p class="eyebrow">词汇关卡</p>
             <div class="lesson-list" id="lessonList"></div>
+            <div class="panel-divider"></div>
+            <p class="eyebrow">知识关卡</p>
+            <div class="knowledge-list" id="knowledgeList"></div>
           </aside>
         </section>
 
@@ -161,6 +166,22 @@
           </div>
           <div class="exam-panel" id="examPanel">
             <p>系统会从 Unit 1-6 随机抽取 20 个单词/短语。考试结束后，会根据每个单元正确率给出重点复习建议。</p>
+          </div>
+        </section>
+
+        <section class="view" id="knowledgeView">
+          <div class="knowledge-reader">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow" id="knowledgeUnitLabel">Unit</p>
+                <h3 id="knowledgeTitle">知识关卡</h3>
+              </div>
+              <div class="knowledge-actions">
+                <button id="completeKnowledge">完成并点亮</button>
+                <button id="backToMap">返回地图</button>
+              </div>
+            </div>
+            <div class="knowledge-content" id="knowledgeContent"></div>
           </div>
         </section>
 

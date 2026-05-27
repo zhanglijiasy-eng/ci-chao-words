@@ -593,12 +593,31 @@ main {
   overflow: auto;
 }
 
-.lesson-card {
+.panel-divider {
+  height: 1px;
+  margin: 18px 0 12px;
+  background: var(--line);
+}
+
+.knowledge-list {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.lesson-card,
+.knowledge-card {
   border-radius: 8px;
   padding: 14px;
   display: grid;
   gap: 4px;
   text-align: left;
+}
+
+.knowledge-card.done {
+  border-color: rgba(80, 240, 200, 0.56);
+  background: rgba(80, 240, 200, 0.1);
 }
 
 .lesson-card em {
@@ -940,8 +959,50 @@ input {
 
 #reviewView,
 #codexView,
-#examView {
+#examView,
+#knowledgeView {
   padding: 20px;
+}
+
+.knowledge-reader {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px;
+  background: var(--panel);
+}
+
+.knowledge-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.knowledge-actions button {
+  min-height: 46px;
+  border-radius: 8px;
+  padding: 0 16px;
+}
+
+.knowledge-content {
+  display: grid;
+  gap: 8px;
+  max-height: 62vh;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.knowledge-line {
+  color: #d7ece8;
+  line-height: 1.65;
+}
+
+.knowledge-line.heading {
+  margin-top: 8px;
+  color: var(--gold);
+  font-weight: 800;
 }
 
 .exam-panel {
