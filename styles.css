@@ -646,46 +646,69 @@ main {
   border: 1px solid var(--line);
   border-radius: 8px;
   display: grid;
-  place-items: center;
   align-content: center;
-  gap: 22px;
-  background: linear-gradient(180deg, rgba(80, 240, 200, 0.08), rgba(255, 255, 255, 0.035));
+  gap: 18px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(80, 240, 200, 0.1), transparent 18rem),
+    linear-gradient(180deg, rgba(80, 240, 200, 0.08), rgba(255, 255, 255, 0.035));
 }
 
-.pulse-rings {
-  position: relative;
-  width: 260px;
-  height: 260px;
+.focus-panel {
+  width: min(100%, 420px);
+  justify-self: center;
+  border: 1px solid rgba(80, 240, 200, 0.28);
+  border-radius: 8px;
+  padding: 20px;
+  background: rgba(6, 18, 22, 0.42);
+}
+
+.focus-panel h3 {
+  font-size: clamp(26px, 3vw, 38px);
+  margin-bottom: 14px;
+}
+
+.focus-meter {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  margin-bottom: 14px;
+}
+
+.focus-meter span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--mint), var(--gold));
+}
+
+.focus-meta {
   display: grid;
-  place-items: center;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
-.pulse-rings span {
-  position: absolute;
-  inset: calc(var(--i, 0) * 34px);
-  border: 1px solid rgba(80, 240, 200, 0.32);
-  border-radius: 50%;
+.focus-meta div {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
 }
 
-.pulse-rings span:nth-child(2) {
-  --i: 1;
+.focus-meta strong,
+.focus-meta small {
+  display: block;
 }
 
-.pulse-rings span:nth-child(3) {
-  --i: 2;
+.focus-meta strong {
+  font-size: 26px;
 }
 
-.enemy-core {
-  position: absolute;
-  width: 116px;
-  height: 116px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: #071013;
-  background: linear-gradient(135deg, var(--mint), var(--gold));
-  font-size: 44px;
-  font-weight: 900;
+.focus-tip {
+  color: #d7ece8;
+  line-height: 1.65;
 }
 
 .question-card {

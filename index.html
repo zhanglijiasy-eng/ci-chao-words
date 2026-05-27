@@ -111,12 +111,18 @@
         <section class="view" id="battleView">
           <div class="battle-board">
             <div class="enemy-field">
-              <div class="pulse-rings">
-                <span></span>
-                <span></span>
-                <span></span>
+              <div class="focus-panel">
+                <p class="eyebrow">学习辅助</p>
+                <h3 id="focusTitle">准备开始</h3>
+                <div class="focus-meter">
+                  <span id="focusProgress"></span>
+                </div>
+                <div class="focus-meta">
+                  <div><strong id="focusIndex">0/0</strong><small>当前进度</small></div>
+                  <div><strong id="focusMisses">0</strong><small>本题失误</small></div>
+                </div>
+                <div class="focus-tip" id="focusTip">开始关卡后，这里会显示当前题型和答题策略。</div>
               </div>
-              <div class="enemy-core" id="enemyCore">?</div>
               <p id="battleMode">选择正确含义，完成共振打击</p>
             </div>
 

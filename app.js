@@ -59,10 +59,13 @@ const state = {
   selectedKnowledge: null,
   lastBattleItems: [],
   queue: [],
+  battleTotal: 0,
+  battleAnswered: 0,
   current: null,
   currentMode: "meaning",
   answered: false,
   awaitingRetry: false,
+  currentMisses: 0,
   examMode: false,
   examSession: null,
   specialMode: null,
@@ -468,6 +471,9 @@ function startBattle(items, label = "今日训练") {
   state.specialMode = items[0]?.challengeType || null;
   state.lastBattleItems = [...items];
   state.queue = state.specialMode ? [...items] : [...items].sort(() => Math.random() - 0.5);
+  state.battleTotal = items.length;
+  state.battleAnswered = 0;
+  state.currentMisses = 0;
   state.selectedLesson = label;
   switchView("battle");
   $("#lessonLabel").textContent = label;
@@ -492,6 +498,9 @@ function startExam() {
   };
   state.lastBattleItems = [];
   state.queue = [...items];
+  state.battleTotal = items.length;
+  state.battleAnswered = 0;
+  state.currentMisses = 0;
   state.selectedLesson = "20 词综合测试";
   switchView("battle");
   $("#lessonLabel").textContent = "随机考试";
@@ -502,6 +511,7 @@ function startExam() {
 function nextQuestion() {
   state.answered = false;
   state.awaitingRetry = false;
+  state.currentMisses = 0;
   $("#nextQuestion").disabled = true;
   $("#feedback").textContent = "";
   $("#feedback").className = "feedback";
@@ -520,14 +530,13 @@ function nextQuestion() {
     $("#answerGrid").innerHTML = "";
     $("#inlineAnswer").classList.remove("show");
     $("#completionActions").classList.add("show");
-    $("#enemyCore").textContent = "✓";
+    updateFocusPanel({ done: true });
     renderStats();
     renderMap();
     return;
   }
   state.current = next;
   state.currentMode = "spelling";
-  $("#enemyCore").textContent = next.word.slice(0, 1).toUpperCase();
   $("#phoneticText").textContent = `${next.phonetic || ""} ${next.partOfSpeech || ""}`.trim();
   $("#battleMode").textContent = state.specialMode
     ? "根据题目填写完整英文，不给首字母"
@@ -545,7 +554,35 @@ function nextQuestion() {
     });
   }
   $("#questionText").textContent = next.meaning;
+  updateFocusPanel();
   if (!state.specialMode) window.setTimeout(speakCurrent, 260);
+}
+
+function currentFocusTitle() {
+  if (state.specialMode === "sentence") return "句型填空";
+  if (state.specialMode === "full") return state.selectedLesson.includes("短语") ? "短语默写" : "词形变换";
+  if (state.examMode) return "随机考试";
+  return "单词拼写";
+}
+
+function currentFocusTip() {
+  if (state.specialMode === "sentence") return "先看中文，再读英文句子，判断划线处缺少哪个单词或短语。";
+  if (state.specialMode === "full" && state.selectedLesson.includes("词性")) return "把同一组词形放在一起记：先想词根，再想词性变化。";
+  if (state.specialMode === "full" && state.selectedLesson.includes("短语")) return "先想核心动词，再补介词和固定搭配。";
+  if (state.examMode) return "按考试节奏作答，结束后会按单元给出复习建议。";
+  return "听音频，看中文和首字母提示，补齐剩余字母。";
+}
+
+function updateFocusPanel(options = {}) {
+  const total = state.battleTotal || 0;
+  const done = options.done;
+  const answered = done ? total : state.battleAnswered;
+  const percent = total ? Math.round(answered / total * 100) : 0;
+  $("#focusTitle").textContent = done ? "本轮完成" : currentFocusTitle();
+  $("#focusIndex").textContent = `${Math.min(answered + (done ? 0 : 1), total)}/${total}`;
+  $("#focusMisses").textContent = state.currentMisses || 0;
+  $("#focusProgress").style.width = `${percent}%`;
+  $("#focusTip").textContent = done ? "可以返回地图选择下一关，也可以再出发巩固一轮。" : currentFocusTip();
 }
 
 function maskWord(word) {
@@ -603,6 +640,7 @@ function answer(correct) {
   if (state.examMode) {
     state.examSession.answers.push({ id: state.current.id, unit: state.current.unit, correct });
     state.answered = true;
+    state.battleAnswered += 1;
     $("#feedback").textContent = correct ? "答对了，进入下一题。" : `本题答案：${state.current.word}`;
     $("#feedback").className = correct ? "feedback good" : "feedback bad";
     window.setTimeout(nextQuestion, correct ? 520 : 1100);
@@ -610,6 +648,7 @@ function answer(correct) {
   }
   if (correct) {
     state.answered = true;
+    state.battleAnswered += 1;
     state.progress.mastered[state.current.id] = (state.progress.mastered[state.current.id] || 0) + 1;
     delete state.progress.mistakes[state.current.id];
     state.progress.streak = (state.progress.streak || 0) + 1;
@@ -624,6 +663,7 @@ function answer(correct) {
   } else {
     state.progress.streak = 0;
     state.awaitingRetry = true;
+    state.currentMisses += 1;
     $("#feedback").textContent = "回答不对，再试一次；也可以先加入错题集，之后去失谐回收战专门复习。";
     $("#feedback").className = "feedback bad";
     $("#mistakeActions").classList.add("show");
@@ -631,6 +671,7 @@ function answer(correct) {
       if (input.value && input.value !== input.dataset.answer) input.classList.add("wrong");
     });
     focusFirstBlank();
+    updateFocusPanel();
     saveProgress();
     renderStats();
   }
@@ -680,7 +721,7 @@ function renderExamResult() {
   $("#inlineAnswer").innerHTML = "";
   $("#mistakeActions").classList.remove("show");
   $("#completionActions").classList.add("show");
-  $("#enemyCore").textContent = "分";
+  updateFocusPanel({ done: true });
   $("#returnMap").textContent = "返回首页";
   $("#setOutAgain").textContent = "再考一次";
   state.lastBattleItems = [];
