@@ -467,7 +467,7 @@ function startBattle(items, label = "今日训练") {
   state.examSession = null;
   state.specialMode = items[0]?.challengeType || null;
   state.lastBattleItems = [...items];
-  state.queue = [...items].sort(() => Math.random() - 0.5);
+  state.queue = state.specialMode ? [...items] : [...items].sort(() => Math.random() - 0.5);
   state.selectedLesson = label;
   switchView("battle");
   $("#lessonLabel").textContent = label;
