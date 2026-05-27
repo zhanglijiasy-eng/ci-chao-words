@@ -1,5 +1,6 @@
 import { vocabulary } from "./vocabulary.js";
 import { knowledgeUnits } from "./knowledge.js";
+import { unit5Challenge } from "./unit5Challenge.js";
 
 const STORAGE_KEY = "ci-chao-progress-v3";
 const LEGACY_STORAGE_KEY = "ci-chao-progress-v2";
@@ -64,6 +65,7 @@ const state = {
   awaitingRetry: false,
   examMode: false,
   examSession: null,
+  specialMode: null,
   filterUnit: "all",
   activeRoleId: null,
   progress: defaultProgress(),
@@ -331,10 +333,12 @@ function renderMap() {
       state.selectedUnit = node.dataset.unit;
       renderMap();
       renderLessons();
+      renderMemoryLessons();
       renderKnowledgeLessons();
     });
   });
   renderLessons();
+  renderMemoryLessons();
   renderKnowledgeLessons();
 }
 
@@ -359,6 +363,40 @@ function renderLessons() {
     const index = Number(card.dataset.lesson);
     card.addEventListener("click", () => startBattle(lessons[index], `${state.selectedUnit} · ${lessonName(state.selectedUnit, index, lessons.length)}`));
   });
+}
+
+function renderMemoryLessons() {
+  const list = $("#memoryList");
+  if (!list) return;
+  if (state.selectedUnit !== unit5Challenge.unit) {
+    list.innerHTML = `<div class="empty-state">这个单元暂无背记闯关。</div>`;
+    return;
+  }
+  list.innerHTML = unit5Challenge.levels.map((level, index) => `
+    <button class="memory-card" data-memory="${level.id}">
+      <span>背记 ${index + 1}</span>
+      <strong>${level.title}</strong>
+      <small>${level.prompt}</small>
+    </button>
+  `).join("");
+  $$(".memory-card").forEach((card) => {
+    card.addEventListener("click", () => startMemoryLevel(card.dataset.memory));
+  });
+}
+
+function startMemoryLevel(levelId) {
+  const level = unit5Challenge.levels.find((item) => item.id === levelId);
+  if (!level) return;
+  state.specialMode = level.type;
+  const items = level.items.map((item, index) => ({
+    id: `unit5-${level.id}-${index}`,
+    unit: unit5Challenge.unit,
+    word: item.answer,
+    meaning: item.clue,
+    sentence: item.sentence || "",
+    challengeType: level.type,
+  }));
+  startBattle(items, `${unit5Challenge.title} · ${level.title}`);
 }
 
 function knowledgeForUnit(unit) {
@@ -427,6 +465,7 @@ function makeDailyQueue() {
 function startBattle(items, label = "今日训练") {
   state.examMode = false;
   state.examSession = null;
+  state.specialMode = items[0]?.challengeType || null;
   state.lastBattleItems = [...items];
   state.queue = [...items].sort(() => Math.random() - 0.5);
   state.selectedLesson = label;
@@ -446,6 +485,7 @@ function balancedExamWords() {
 function startExam() {
   const items = balancedExamWords();
   state.examMode = true;
+  state.specialMode = null;
   state.examSession = {
     total: items.length,
     answers: [],
@@ -489,13 +529,23 @@ function nextQuestion() {
   state.currentMode = "spelling";
   $("#enemyCore").textContent = next.word.slice(0, 1).toUpperCase();
   $("#phoneticText").textContent = `${next.phonetic || ""} ${next.partOfSpeech || ""}`.trim();
-  $("#battleMode").textContent = "听音频，看中文和首字母提示，填写剩余字母";
+  $("#battleMode").textContent = state.specialMode
+    ? "根据题目填写完整英文，不给首字母"
+    : "听音频，看中文和首字母提示，填写剩余字母";
   $("#speakBtn").disabled = !("speechSynthesis" in window);
 
-  $("#answerGrid").innerHTML = "";
-  renderInlineAnswer(next.word);
+  if (state.specialMode === "sentence") {
+    $("#answerGrid").innerHTML = `<div class="sentence-card">${renderSentenceWithBlank(next.sentence)}</div>`;
+    renderInlineAnswer(next.word, { showFirst: false, label: "填写划线处" });
+  } else {
+    $("#answerGrid").innerHTML = "";
+    renderInlineAnswer(next.word, {
+      showFirst: !state.specialMode,
+      label: state.specialMode ? "填写英文" : "首字母提示",
+    });
+  }
   $("#questionText").textContent = next.meaning;
-  window.setTimeout(speakCurrent, 260);
+  if (!state.specialMode) window.setTimeout(speakCurrent, 260);
 }
 
 function maskWord(word) {
@@ -509,19 +559,26 @@ function remainingLetters(word) {
   return String(word).replace(/[A-Za-z]+/g, (part) => part.slice(1));
 }
 
-function renderInlineAnswer(word) {
+function renderSentenceWithBlank(sentence) {
+  return String(sentence || "").replace("____", '<span class="sentence-blank">________</span>');
+}
+
+function renderInlineAnswer(word, options = {}) {
+  const showFirst = options.showFirst !== false;
+  const label = options.label || "首字母提示";
   const form = $("#inlineAnswer");
   let inputIndex = 0;
   const html = String(word).replace(/[A-Za-z]+|[^A-Za-z]+/g, (part) => {
     if (!/[A-Za-z]/.test(part)) return `<span class="answer-separator">${part}</span>`;
-    const first = part[0];
-    const blanks = part.slice(1).split("").map((letter) => {
+    const first = showFirst ? part[0] : "";
+    const letters = showFirst ? part.slice(1) : part;
+    const blanks = letters.split("").map((letter) => {
       const index = inputIndex++;
       return `<input class="letter-input" data-answer="${letter.toLowerCase()}" data-index="${index}" maxlength="1" autocomplete="off" inputmode="latin" aria-label="第 ${index + 1} 个字母" />`;
     }).join("");
-    return `<span class="answer-word"><span class="given-letter">${first}</span>${blanks}</span>`;
+    return `<span class="answer-word">${showFirst ? `<span class="given-letter">${first}</span>` : ""}${blanks}</span>`;
   });
-  form.innerHTML = `<span class="inline-label">首字母提示</span><div class="inline-lines">${html}</div><button class="inline-submit" id="submitTyping" type="submit">确认</button>`;
+  form.innerHTML = `<span class="inline-label">${label}</span><div class="inline-lines">${html}</div><button class="inline-submit" id="submitTyping" type="submit">确认</button>`;
   form.classList.add("show");
   const firstInput = form.querySelector(".letter-input");
   if (firstInput) firstInput.focus();
@@ -532,7 +589,8 @@ function inlineAnswerText() {
 }
 
 function isCorrectSpelling(word) {
-  return compact(inlineAnswerText()) === compact(remainingLetters(word));
+  const expected = state.specialMode ? word : remainingLetters(word);
+  return compact(inlineAnswerText()) === compact(expected);
 }
 
 function focusFirstBlank() {

@@ -599,7 +599,8 @@ main {
   background: var(--line);
 }
 
-.knowledge-list {
+.knowledge-list,
+.memory-list {
   display: grid;
   gap: 10px;
   max-height: 360px;
@@ -607,12 +608,18 @@ main {
 }
 
 .lesson-card,
-.knowledge-card {
+.knowledge-card,
+.memory-card {
   border-radius: 8px;
   padding: 14px;
   display: grid;
   gap: 4px;
   text-align: left;
+}
+
+.memory-card {
+  border-color: rgba(242, 193, 78, 0.34);
+  background: rgba(242, 193, 78, 0.08);
 }
 
 .knowledge-card.done {
@@ -737,6 +744,24 @@ main {
   font-size: clamp(24px, 3vw, 36px);
   letter-spacing: 0.08em;
   overflow-wrap: anywhere;
+}
+
+.sentence-card {
+  border: 1px solid rgba(242, 193, 78, 0.34);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  color: #eaf8f5;
+  background: rgba(242, 193, 78, 0.08);
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.7;
+}
+
+.sentence-blank {
+  color: var(--gold);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .answer-option {
