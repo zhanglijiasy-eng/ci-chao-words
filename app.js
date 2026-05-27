@@ -65,6 +65,7 @@ const state = {
   currentMode: "meaning",
   answered: false,
   awaitingRetry: false,
+  pendingMistakeConfirm: false,
   currentMisses: 0,
   examMode: false,
   examSession: null,
@@ -588,11 +589,13 @@ function startExam() {
 function nextQuestion() {
   state.answered = false;
   state.awaitingRetry = false;
+  state.pendingMistakeConfirm = false;
   state.currentMisses = 0;
   $("#nextQuestion").disabled = true;
   $("#feedback").textContent = "";
   $("#feedback").className = "feedback";
   $("#mistakeActions").classList.remove("show");
+  $("#mistakeActions").classList.remove("confirming");
   $("#completionActions").classList.remove("show");
   $("#returnMap").textContent = "返回地图";
   $("#setOutAgain").textContent = "再出发";
@@ -845,6 +848,7 @@ function retryQuestion() {
   if (!state.current) return;
   state.answered = false;
   state.awaitingRetry = false;
+  state.pendingMistakeConfirm = false;
   $$(".letter-input").forEach((input) => {
     input.value = "";
     input.classList.remove("wrong");
@@ -856,12 +860,28 @@ function retryQuestion() {
   $("#feedback").textContent = "重新调律中。";
   $("#feedback").className = "feedback";
   $("#mistakeActions").classList.remove("show");
+  $("#mistakeActions").classList.remove("confirming");
   focusFirstBlank();
   speakCurrent();
 }
 
 function addCurrentMistake() {
   if (!state.current) return;
+  state.pendingMistakeConfirm = true;
+  $("#feedback").innerHTML = `
+    <div class="answer-reveal">
+      <span>正确答案</span>
+      <strong>${state.current.word}</strong>
+      <small>${state.current.meaning}</small>
+    </div>
+  `;
+  $("#feedback").className = "feedback bad";
+  $("#mistakeActions").classList.add("confirming");
+  return;
+}
+
+function confirmCurrentMistake() {
+  if (!state.current || !state.pendingMistakeConfirm) return;
   state.progress.mistakes[state.current.id] = (state.progress.mistakes[state.current.id] || 0) + 1;
   saveProgress();
   renderStats();
@@ -869,6 +889,8 @@ function addCurrentMistake() {
   $("#feedback").textContent = `已加入错题集：${state.current.word} = ${state.current.meaning}`;
   $("#feedback").className = "feedback bad";
   $("#mistakeActions").classList.remove("show");
+  $("#mistakeActions").classList.remove("confirming");
+  state.pendingMistakeConfirm = false;
   state.answered = true;
   window.setTimeout(nextQuestion, 850);
 }
@@ -944,6 +966,7 @@ function bindEvents() {
   $("#nextQuestion").addEventListener("click", nextQuestion);
   $("#retryQuestion").addEventListener("click", retryQuestion);
   $("#addMistake").addEventListener("click", addCurrentMistake);
+  $("#confirmMistake").addEventListener("click", confirmCurrentMistake);
   $("#returnMap").addEventListener("click", () => switchView("map"));
   $("#backToMap").addEventListener("click", () => switchView("map"));
   $("#completeKnowledge").addEventListener("click", completeKnowledgeLevel);

@@ -961,6 +961,23 @@ input {
   display: grid;
 }
 
+.mistake-actions #confirmMistake {
+  display: none;
+}
+
+.mistake-actions.confirming {
+  grid-template-columns: 1fr;
+}
+
+.mistake-actions.confirming #retryQuestion,
+.mistake-actions.confirming #addMistake {
+  display: none;
+}
+
+.mistake-actions.confirming #confirmMistake {
+  display: block;
+}
+
 .mistake-actions button {
   min-height: 46px;
   border-radius: 8px;
@@ -1002,6 +1019,31 @@ input {
 #addMistake {
   border-color: rgba(255, 125, 110, 0.48);
   background: rgba(255, 125, 110, 0.11);
+}
+
+#confirmMistake {
+  border-color: rgba(242, 193, 78, 0.6);
+  background: rgba(242, 193, 78, 0.12);
+}
+
+.answer-reveal {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(242, 193, 78, 0.36);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(242, 193, 78, 0.1);
+}
+
+.answer-reveal span,
+.answer-reveal small {
+  color: var(--muted);
+}
+
+.answer-reveal strong {
+  color: var(--gold);
+  font-size: clamp(24px, 3vw, 34px);
+  overflow-wrap: anywhere;
 }
 
 .battle-actions {
