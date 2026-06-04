@@ -1,8 +1,10 @@
 import { wordGroups } from "./wordData.js";
 
 const STORE = "mirai-vocab-progress-v1";
+const EDIT_STORE = "mirai-vocab-word-edits-v1";
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+const originalWords = new Map(wordGroups.flatMap((group) => group.items.map((item) => [item.id, { ...item }])));
 
 const state = {
   track: "小学分类",
@@ -16,6 +18,7 @@ const state = {
   examMode: false,
   pendingMistake: false,
   progress: loadProgress(),
+  edits: loadEdits(),
 };
 
 function defaultProgress() {
@@ -32,6 +35,29 @@ function loadProgress() {
 
 function saveProgress() {
   localStorage.setItem(STORE, JSON.stringify(state.progress));
+}
+
+function loadEdits() {
+  try {
+    return JSON.parse(localStorage.getItem(EDIT_STORE)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveEdits() {
+  localStorage.setItem(EDIT_STORE, JSON.stringify(state.edits));
+}
+
+function applyWordEdits() {
+  allWords().forEach((item) => {
+    const original = originalWords.get(item.id);
+    const edit = state.edits[item.id];
+    if (!original) return;
+    item.word = edit?.word || original.word;
+    item.meaning = edit?.meaning || original.meaning;
+    item.partOfSpeech = edit?.partOfSpeech ?? original.partOfSpeech;
+  });
 }
 
 function groupByTrack() {
@@ -357,11 +383,82 @@ function examAdvice() {
 function renderCodex() {
   const q = $("#searchInput").value.trim().toLowerCase();
   const items = allWords().filter((item) => !q || `${item.word} ${item.meaning} ${item.unit}`.toLowerCase().includes(q)).slice(0, 360);
-  $("#wordGrid").innerHTML = items.map(wordCard).join("");
+  $("#wordGrid").innerHTML = items.map((item) => wordCard(item, true)).join("");
 }
 
-function wordCard(item) {
-  return `<article class="word ${state.progress.mastered[item.id] ? "lit" : ""}"><strong>${item.word}</strong><p>${item.meaning}</p><small>${item.unit}</small></article>`;
+function wordCard(item, editable = false) {
+  const edited = state.edits[item.id] ? `<span class="edited">已修改</span>` : "";
+  const editButton = editable ? `<button class="edit-word" type="button" data-edit-id="${item.id}">编辑</button>` : "";
+  return `
+    <article class="word ${state.progress.mastered[item.id] ? "lit" : ""}">
+      <div class="word-top">
+        <strong>${escapeHtml(item.word)}</strong>
+        ${editButton}
+      </div>
+      <p>${escapeHtml(item.meaning)}</p>
+      <small>${escapeHtml([item.partOfSpeech, item.unit].filter(Boolean).join(" · "))}${edited}</small>
+    </article>
+  `;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  }[char]));
+}
+
+function openEdit(id) {
+  const item = allWords().find((word) => word.id === id);
+  if (!item) return;
+  $("#editId").value = id;
+  $("#editWord").value = item.word;
+  $("#editMeaning").value = item.meaning;
+  $("#editPos").value = item.partOfSpeech || "";
+  $("#editSource").textContent = `${item.source} · ${item.unit}`;
+  $("#editDialog").showModal();
+  $("#editWord").focus();
+}
+
+function saveWordEdit() {
+  const id = $("#editId").value;
+  const original = originalWords.get(id);
+  if (!original) return;
+  const word = $("#editWord").value.trim();
+  const meaning = $("#editMeaning").value.trim();
+  const partOfSpeech = $("#editPos").value.trim();
+  if (!word || !meaning) return showToast("英文和中文释义都要填写。");
+  const edit = {};
+  if (word !== original.word) edit.word = word;
+  if (meaning !== original.meaning) edit.meaning = meaning;
+  if (partOfSpeech !== (original.partOfSpeech || "")) edit.partOfSpeech = partOfSpeech;
+  if (Object.keys(edit).length) state.edits[id] = edit;
+  else delete state.edits[id];
+  saveEdits();
+  applyWordEdits();
+  renderAfterWordEdit();
+  $("#editDialog").close();
+  showToast("词条已保存。");
+}
+
+function restoreWordEdit() {
+  const id = $("#editId").value;
+  delete state.edits[id];
+  saveEdits();
+  applyWordEdits();
+  renderAfterWordEdit();
+  $("#editDialog").close();
+  showToast("已恢复原词条。");
+}
+
+function renderAfterWordEdit() {
+  renderMap();
+  renderExam();
+  renderMistakes();
+  renderCodex();
 }
 
 function showToast(text) {
@@ -377,7 +474,6 @@ function bind() {
   $("#answerForm").addEventListener("input", handleLetterInput);
   $("#answerForm").addEventListener("keydown", handleLetterKeydown);
   $("#speakBtn").addEventListener("click", speakCurrent);
-  $("#startDaily").addEventListener("click", () => startTraining(sample(allWords().filter((item) => !state.progress.mastered[item.id]), 20), "今日训练"));
   $("#backMap").addEventListener("click", () => switchView("map"));
   $("#againBtn").addEventListener("click", () => state.lastItems.length && startTraining(state.lastItems, "再来一轮"));
   $("#retryBtn").addEventListener("click", retryQuestion);
@@ -390,6 +486,16 @@ function bind() {
   });
   $("#startExam").addEventListener("click", startExam);
   $("#searchInput").addEventListener("input", renderCodex);
+  $("#wordGrid").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-edit-id]");
+    if (button) openEdit(button.dataset.editId);
+  });
+  $("#editForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveWordEdit();
+  });
+  $("#closeEdit").addEventListener("click", () => $("#editDialog").close());
+  $("#restoreWord").addEventListener("click", restoreWordEdit);
   $("#resetProgress").addEventListener("click", () => {
     if (confirm("确定清空本机学习进度吗？")) {
       state.progress = defaultProgress();
@@ -399,6 +505,7 @@ function bind() {
   });
 }
 
+applyWordEdits();
 bind();
 renderStats();
 renderMap();

@@ -628,6 +628,12 @@ main {
   font-size: 22px;
 }
 
+.codex-note {
+  margin: -8px 0 20px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .word-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -637,6 +643,22 @@ main {
 .word {
   padding: 16px;
   box-shadow: none;
+}
+
+.word-top {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.edit-word {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--cyan);
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .word.lit {
@@ -651,6 +673,13 @@ main {
   min-height: 44px;
   margin: 8px 0;
   color: var(--muted);
+}
+
+.edited {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--yellow);
+  font-weight: 900;
 }
 
 .empty {
@@ -729,6 +758,69 @@ main {
 .toast.show {
   opacity: 1;
   transform: translateY(0);
+}
+
+.edit-dialog {
+  width: min(620px, calc(100vw - 28px));
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  color: var(--text);
+  background: rgba(8, 22, 25, 0.98);
+  box-shadow: var(--shadow);
+}
+
+.edit-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(6px);
+}
+
+.edit-form {
+  display: grid;
+  gap: 16px;
+}
+
+.edit-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.edit-form label span,
+.edit-source {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.edit-form input,
+.edit-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.edit-form textarea {
+  resize: vertical;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.edit-actions button {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 9px;
+  font-weight: 900;
+}
+
+#saveEdit {
+  border-color: transparent;
+  color: #061012;
+  background: linear-gradient(135deg, var(--cyan), var(--mint));
 }
 
 @media (max-width: 1180px) {

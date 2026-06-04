@@ -85,7 +85,6 @@
                 <button id="confirmMistakeBtn" type="button">确认加入并继续</button>
               </div>
               <div class="actions">
-                <button id="startDaily" type="button">开始今日训练</button>
                 <button id="backMap" type="button">返回地图</button>
                 <button id="againBtn" type="button">再来一轮</button>
               </div>
@@ -114,10 +113,38 @@
             <div><p class="eyebrow">音符词库</p><h3>全部单词</h3></div>
             <input id="searchInput" placeholder="搜索英文或中文" />
           </div>
+          <p class="codex-note">点开单词卡片可修改英文、中文释义和词性；修改会保存在这台电脑的浏览器里。</p>
           <div class="word-grid" id="wordGrid"></div>
         </section>
       </main>
     </div>
+
+    <dialog class="edit-dialog" id="editDialog">
+      <form method="dialog" class="edit-form" id="editForm">
+        <div class="section-head">
+          <div><p class="eyebrow">词库编辑</p><h3>修改词条</h3></div>
+          <button type="button" id="closeEdit">关闭</button>
+        </div>
+        <input type="hidden" id="editId" />
+        <label>
+          <span>英文</span>
+          <input id="editWord" autocomplete="off" spellcheck="false" />
+        </label>
+        <label>
+          <span>中文释义</span>
+          <textarea id="editMeaning" rows="4"></textarea>
+        </label>
+        <label>
+          <span>词性</span>
+          <input id="editPos" autocomplete="off" />
+        </label>
+        <p class="edit-source" id="editSource"></p>
+        <div class="edit-actions">
+          <button type="button" id="restoreWord">恢复原词条</button>
+          <button type="submit" id="saveEdit">保存修改</button>
+        </div>
+      </form>
+    </dialog>
 
     <div class="toast" id="toast"></div>
     <script type="module" src="./app.js"></script>
