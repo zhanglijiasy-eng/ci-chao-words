@@ -210,6 +210,7 @@ function renderAnswer(word) {
   $("#answerForm").innerHTML = `
     <span class="inline-label">首字母提示</span>
     <div class="inline-lines">${lines}</div>
+    <button class="skip-question" id="skipQuestion" type="button">不会</button>
     <button class="submit" type="submit">确认</button>
   `;
   focusFirstBlank();
@@ -230,7 +231,8 @@ function answerCurrent() {
   if (state.examMode) {
     state.current.examCorrect = correct;
     state.answered += 1;
-    $("#feedback").textContent = correct ? "答对了，下一题。" : `本题答案：${state.current.word}`;
+    if (!correct) addToMistakes(state.current);
+    $("#feedback").textContent = correct ? "答对了，下一题。" : `本题答案：${state.current.word}，已加入错题集。`;
     $("#feedback").className = correct ? "feedback good" : "feedback bad";
     setTimeout(nextQuestion, correct ? 450 : 1000);
     return;
@@ -267,9 +269,7 @@ function revealMistake() {
 
 function confirmMistake() {
   if (!state.current || !state.pendingMistake) return;
-  state.progress.mistakes[state.current.id] = (state.progress.mistakes[state.current.id] || 0) + 1;
-  saveProgress();
-  renderStats();
+  addToMistakes(state.current);
   renderMistakes();
   state.answered += 1;
   $("#mistakeActions").classList.remove("show", "confirming");
@@ -285,6 +285,27 @@ function retryQuestion() {
   focusFirstBlank();
   $("#mistakeActions").classList.remove("show", "confirming");
   $("#feedback").textContent = "再试一次。";
+}
+
+function addToMistakes(item) {
+  if (!item) return;
+  state.progress.mistakes[item.id] = (state.progress.mistakes[item.id] || 0) + 1;
+  saveProgress();
+  renderStats();
+}
+
+function skipCurrentQuestion() {
+  if (!state.current) return;
+  if (state.examMode) {
+    state.current.examCorrect = false;
+    state.answered += 1;
+    addToMistakes(state.current);
+    $("#feedback").textContent = `本题答案：${state.current.word}，已加入错题集。`;
+    $("#feedback").className = "feedback bad";
+    setTimeout(nextQuestion, 1000);
+    return;
+  }
+  revealMistake();
 }
 
 function letterAnswerText() {
@@ -473,6 +494,9 @@ function bind() {
   $("#answerForm").addEventListener("submit", (event) => { event.preventDefault(); answerCurrent(); });
   $("#answerForm").addEventListener("input", handleLetterInput);
   $("#answerForm").addEventListener("keydown", handleLetterKeydown);
+  $("#answerForm").addEventListener("click", (event) => {
+    if (event.target.closest("#skipQuestion")) skipCurrentQuestion();
+  });
   $("#speakBtn").addEventListener("click", speakCurrent);
   $("#backMap").addEventListener("click", () => switchView("map"));
   $("#againBtn").addEventListener("click", () => state.lastItems.length && startTraining(state.lastItems, "再来一轮"));

@@ -480,6 +480,7 @@ main {
 
 .inline-lines {
   display: flex;
+  grid-column: 1 / -1;
   align-items: end;
   flex-wrap: wrap;
   gap: 12px;
@@ -538,6 +539,7 @@ main {
 }
 
 .submit,
+.skip-question,
 .section-head button,
 .actions button:first-child,
 #startExam,
@@ -545,6 +547,17 @@ main {
   border-color: transparent;
   color: #061012;
   background: linear-gradient(135deg, var(--cyan), var(--mint));
+}
+
+.skip-question {
+  justify-self: end;
+  border-color: rgba(255, 226, 106, 0.62);
+  color: var(--yellow);
+  background: rgba(255, 226, 106, 0.08);
+}
+
+.skip-question:hover {
+  background: rgba(255, 226, 106, 0.14);
 }
 
 .feedback {
