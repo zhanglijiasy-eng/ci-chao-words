@@ -60,6 +60,12 @@ function normalize(text) {
   return String(text || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+function remainingLetters(word) {
+  return String(word)
+    .replace(/[A-Za-z]+|[^A-Za-z]+/g, (part) => /[A-Za-z]/.test(part) ? part.slice(1) : "")
+    .toLowerCase();
+}
+
 function switchView(name) {
   $$(".view").forEach((view) => view.classList.remove("active"));
   $(`#${name}View`).classList.add("active");
@@ -165,12 +171,22 @@ function nextQuestion() {
 }
 
 function renderAnswer(word) {
+  let inputIndex = 0;
+  const lines = String(word).replace(/[A-Za-z]+|[^A-Za-z]+/g, (part) => {
+    if (!/[A-Za-z]/.test(part)) return `<span class="answer-separator">${part}</span>`;
+    const first = part[0];
+    const blanks = part.slice(1).split("").map((letter) => {
+      const index = inputIndex++;
+      return `<input class="letter-input" data-answer="${letter.toLowerCase()}" data-index="${index}" maxlength="1" autocomplete="off" inputmode="latin" aria-label="第 ${index + 1} 个字母" />`;
+    }).join("");
+    return `<span class="answer-word"><span class="given-letter">${first}</span>${blanks}</span>`;
+  });
   $("#answerForm").innerHTML = `
-    <span class="inline-label">填写完整英文</span>
-    <input class="full-input" id="fullInput" autocomplete="off" spellcheck="false" />
+    <span class="inline-label">首字母提示</span>
+    <div class="inline-lines">${lines}</div>
     <button class="submit" type="submit">确认</button>
   `;
-  $("#fullInput").focus();
+  focusFirstBlank();
 }
 
 function updateHelper(done) {
@@ -179,12 +195,12 @@ function updateHelper(done) {
   $("#progressBar").style.width = `${percent}%`;
   $("#questionIndex").textContent = `${Math.min(state.answered + (done ? 0 : 1), state.total)}/${state.total}`;
   $("#missCount").textContent = state.misses;
-  $("#helperTip").textContent = state.examMode ? "按所选范围出题，结束后会提示薄弱分区。" : "看中文提示，直接默写完整英文。短语按空格输入即可。";
+  $("#helperTip").textContent = state.examMode ? "按所选范围出题，结束后会提示薄弱分区。" : "听音频，看中文和首字母提示，补齐剩余字母。";
 }
 
 function answerCurrent() {
   if (!state.current) return;
-  const correct = normalize($("#fullInput").value) === normalize(state.current.word);
+  const correct = normalize(letterAnswerText()) === normalize(remainingLetters(state.current.word));
   if (state.examMode) {
     state.current.examCorrect = correct;
     state.answered += 1;
@@ -236,10 +252,42 @@ function confirmMistake() {
 }
 
 function retryQuestion() {
-  $("#fullInput").value = "";
-  $("#fullInput").focus();
+  $$(".letter-input").forEach((input) => {
+    input.value = "";
+    input.classList.remove("wrong");
+  });
+  focusFirstBlank();
   $("#mistakeActions").classList.remove("show", "confirming");
   $("#feedback").textContent = "再试一次。";
+}
+
+function letterAnswerText() {
+  return $$(".letter-input").map((input) => input.value).join("");
+}
+
+function focusFirstBlank() {
+  const firstEmpty = $$(".letter-input").find((input) => !input.value);
+  (firstEmpty || $(".letter-input"))?.focus();
+}
+
+function handleLetterInput(event) {
+  const input = event.target.closest(".letter-input");
+  if (!input) return;
+  input.value = input.value.replace(/[^a-z]/gi, "").slice(-1).toLowerCase();
+  input.classList.remove("wrong");
+  if (input.value) {
+    const next = $$(".letter-input")[Number(input.dataset.index) + 1];
+    next?.focus();
+  }
+}
+
+function handleLetterKeydown(event) {
+  const input = event.target.closest(".letter-input");
+  if (!input) return;
+  if (event.key === "Backspace" && !input.value) {
+    const previous = $$(".letter-input")[Number(input.dataset.index) - 1];
+    previous?.focus();
+  }
 }
 
 function speakCurrent() {
@@ -326,6 +374,8 @@ function showToast(text) {
 function bind() {
   $$(".nav").forEach((button) => button.addEventListener("click", () => switchView(button.dataset.view)));
   $("#answerForm").addEventListener("submit", (event) => { event.preventDefault(); answerCurrent(); });
+  $("#answerForm").addEventListener("input", handleLetterInput);
+  $("#answerForm").addEventListener("keydown", handleLetterKeydown);
   $("#speakBtn").addEventListener("click", speakCurrent);
   $("#startDaily").addEventListener("click", () => startTraining(sample(allWords().filter((item) => !state.progress.mastered[item.id]), 20), "今日训练"));
   $("#backMap").addEventListener("click", () => switchView("map"));

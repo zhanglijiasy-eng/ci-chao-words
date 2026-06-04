@@ -461,7 +461,6 @@ main {
   font-weight: 800;
 }
 
-.full-input,
 #searchInput {
   width: 100%;
   min-width: 0;
@@ -474,10 +473,68 @@ main {
   font-weight: 900;
 }
 
-.full-input:focus,
 #searchInput:focus {
   border-color: var(--cyan);
   box-shadow: 0 18px 38px -26px var(--cyan);
+}
+
+.inline-lines {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.answer-word {
+  display: inline-flex;
+  align-items: end;
+  gap: 5px;
+  margin: 0 4px 8px 0;
+}
+
+.given-letter {
+  display: grid;
+  place-items: end center;
+  min-width: 34px;
+  height: 48px;
+  color: var(--yellow);
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.letter-input {
+  width: 32px;
+  min-height: 48px;
+  border: 0;
+  border-bottom: 4px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0;
+  padding: 0 0 5px;
+  text-align: center;
+  color: var(--text);
+  background: transparent;
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+.letter-input:focus {
+  outline: 0;
+  border-bottom-color: var(--cyan);
+  box-shadow: 0 18px 30px -22px var(--cyan);
+}
+
+.letter-input.wrong {
+  border-bottom-color: var(--bad);
+}
+
+.answer-separator {
+  min-width: 14px;
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 24px;
+  font-weight: 800;
 }
 
 .submit,
@@ -727,7 +784,10 @@ main {
     grid-template-columns: 1fr;
   }
 
-  .full-input {
-    font-size: 30px;
+  .given-letter,
+  .letter-input {
+    width: 28px;
+    min-width: 28px;
+    font-size: 28px;
   }
 }
