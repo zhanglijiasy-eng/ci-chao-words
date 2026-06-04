@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>未来音阶词境</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app active" id="app">
+      <aside class="side">
+        <div class="brand">
+          <div class="logo">01</div>
+          <div>
+            <h2>未来音阶词境</h2>
+            <p>PET + 小学分类词库</p>
+          </div>
+        </div>
+        <nav>
+          <button class="nav active" data-view="map">地图</button>
+          <button class="nav" data-view="train">训练</button>
+          <button class="nav" data-view="mistakes">错题</button>
+          <button class="nav" data-view="exam">考试</button>
+          <button class="nav" data-view="codex">词库</button>
+        </nav>
+        <section class="profile">
+          <div class="avatar" id="avatarMark">音</div>
+          <small>统一学习档案</small>
+          <strong id="roleName">音阶练习生</strong>
+          <div class="xp"><span id="xpBar"></span></div>
+        </section>
+        <button class="ghost" id="resetProgress">清空进度</button>
+      </aside>
+
+      <main>
+        <header class="top">
+          <div>
+            <p class="eyebrow">今日舞台</p>
+            <h1 id="screenTitle">音阶地图</h1>
+          </div>
+          <div class="stats">
+            <div><strong id="masteredCount">0</strong><span>已点亮</span></div>
+            <div><strong id="starCount">0</strong><span>音符星</span></div>
+            <div><strong id="comboCount">0</strong><span>连击</span></div>
+          </div>
+        </header>
+
+        <section class="view active" id="mapView">
+          <div class="track-tabs" id="trackTabs"></div>
+          <div class="map-grid" id="zoneGrid"></div>
+          <aside class="panel">
+            <p class="eyebrow">当前分区</p>
+            <h3 id="zoneTitle">选择一个分区</h3>
+            <p id="zoneMeta"></p>
+            <div class="lesson-list" id="lessonList"></div>
+          </aside>
+        </section>
+
+        <section class="view" id="trainView">
+          <div class="battle">
+            <section class="helper">
+              <p class="eyebrow">学习辅助</p>
+              <h3 id="helperTitle">准备开始</h3>
+              <div class="meter"><span id="progressBar"></span></div>
+              <div class="helper-stats">
+                <div><strong id="questionIndex">0/0</strong><span>进度</span></div>
+                <div><strong id="missCount">0</strong><span>本题失误</span></div>
+              </div>
+              <p id="helperTip">选择关卡后开始。</p>
+            </section>
+            <section class="question">
+              <div class="question-head">
+                <div>
+                  <p class="eyebrow" id="lessonLabel">训练</p>
+                  <h2 id="questionText">点击开始训练</h2>
+                </div>
+                <button id="speakBtn" title="朗读">音</button>
+              </div>
+              <p class="phonetic" id="metaText"></p>
+              <form class="answer" id="answerForm"></form>
+              <div class="feedback" id="feedback"></div>
+              <div class="mistake-actions" id="mistakeActions">
+                <button id="retryBtn" type="button">重新回答</button>
+                <button id="addMistakeBtn" type="button">加入错题集</button>
+                <button id="confirmMistakeBtn" type="button">确认加入并继续</button>
+              </div>
+              <div class="actions">
+                <button id="startDaily" type="button">开始今日训练</button>
+                <button id="backMap" type="button">返回地图</button>
+                <button id="againBtn" type="button">再来一轮</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view card-view" id="mistakesView">
+          <div class="section-head">
+            <div><p class="eyebrow">错题调音台</p><h3>错题集</h3></div>
+            <button id="startMistakes">复习错题</button>
+          </div>
+          <div class="word-grid" id="mistakeGrid"></div>
+        </section>
+
+        <section class="view card-view" id="examView">
+          <div class="section-head">
+            <div><p class="eyebrow">Live Test</p><h3>自选范围考试</h3></div>
+            <button id="startExam">开始考试</button>
+          </div>
+          <div class="exam-panel" id="examPanel"></div>
+        </section>
+
+        <section class="view card-view" id="codexView">
+          <div class="section-head">
+            <div><p class="eyebrow">音符词库</p><h3>全部单词</h3></div>
+            <input id="searchInput" placeholder="搜索英文或中文" />
+          </div>
+          <div class="word-grid" id="wordGrid"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
